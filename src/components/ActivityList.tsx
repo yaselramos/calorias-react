@@ -1,21 +1,18 @@
-import { useMemo, Dispatch } from "react"
+import { useMemo } from "react"
 import { Activity } from "../types"
 import { categories } from "../data/categories"
 import { PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/outline'
-import { ActivityActions } from "../reducers/activity-reducer"
+import { useCalorias } from "../hooks/useCalorias"
 
-type ActivityListProps = {
-    activities: Activity[],
-    dispatch: Dispatch<ActivityActions>
-}
 
-export default function ActivityList({activities, dispatch} : ActivityListProps) {
+export default function ActivityList() {
+    const { state ,dispatch} = useCalorias()
 
     const categoryName = useMemo(() =>
         (category: Activity['category']) => categories.find(cat => cat.id === category)?.name ?? ''
     , [])
 
-    const isEmptyActivities = useMemo(() => activities.length === 0, [activities])
+    const isEmptyActivities = useMemo(() => state.activities.length === 0, [state.activities])
 
     return (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -25,7 +22,7 @@ export default function ActivityList({activities, dispatch} : ActivityListProps)
         
             {isEmptyActivities ? 
                 <p className="my-8 rounded-xl bg-slate-50 px-4 py-6 text-center text-slate-500">No hay actividades aun...</p> :
-                activities.map( activity => (
+                state.activities.map( activity => (
                     <article key={activity.id} className="mt-5 flex flex-col gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm md:flex-row md:items-center md:justify-between">
                         <div className="space-y-2">
                             <p className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-white
