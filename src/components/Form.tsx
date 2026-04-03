@@ -1,139 +1,111 @@
-import { categories } from "../data/categorys"
-import { useEffect, useState, type Dispatch, type FormEvent } from "react"
-import { type ChangeEvent } from "react"
+import { useState, ChangeEvent, FormEvent, Dispatch, useEffect } from "react"
+import { v4 as uuidv4 } from 'uuid'
+import { categories } from "../data/categories"
 import type { Activity } from "../types"
-import { type ActivityAction } from "../reducers/activity-reducer"
-import { v4 as uuidv4 } from 'uuid'
+import { ActivityActions, ActivityState } from "../reducers/activity-reducer"
 
 type FormProps = {
-    dispatch: Dispatch<ActivityAction>
-    selectedDate: string
-    editingActivity?: Activity | null
-    onCancelEdit?: () => void
+  dispatch: Dispatch<ActivityActions>,
+  state: ActivityState
 }
 
-const estadoIniciar: Activity = {
-    id: uuidv4(),
-    category: categories[0]?.id ?? 1,
-    name: "",
-    calories: 0,
-    date: new Date().toISOString().split("T")[0],
+const initialState : Activity = {
+  id: uuidv4(),
+  category: 1,
+  name: '',
+  calories: 0
 }
 
-export default function Form({ dispatch, selectedDate, editingActivity, onCancelEdit }: FormProps) {
-    const [activityType, setActivityType] = useState<Activity>(
-        editingActivity || { ...estadoIniciar, id: uuidv4(), date: selectedDate }
-    )
+export default function Form({dispatch, state} : FormProps) {
 
-    useEffect(() => {
-        if (editingActivity) {
-            setActivityType(editingActivity)
-            return
-        }
+  const [activity, setActivity] = useState<Activity>(initialState)
 
-        setActivityType((prev) => ({ ...prev, date: selectedDate }))
-    }, [editingActivity, selectedDate])
-
-
-    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target
-
-        setActivityType((prev) => {
-            if (name === "category") {
-                return { ...prev, category: Number(value) }
-            }
-
-            if (name === "calories") {
-                return { ...prev, calories: Number(value) }
-            }
-
-            if (name === "date") {
-                return { ...prev, date: value }
-            }
-
-            return { ...prev, name: value }
-        })
+  useEffect(() => {
+    if(state.activeId) {
+      const selectedActivity = state.activities.filter( stateActivity => stateActivity.id === state.activeId )[0]
+      setActivity(selectedActivity)
     }
+  }, [state.activeId])
 
-    const isValidActivity = () => {
-        const { name, calories, date } = activityType
-        return name.trim() !== '' && calories > 0 && date.trim() !== ""
-    }
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        const normalizedActivity = { ...activityType, date: selectedDate }
+  const handleChange = (e: ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLInputElement>) => {
+    const isNumberField = ['category', 'calories'].includes(e.target.id)
 
-        if (editingActivity) {
-            dispatch({ type: "update-activity", payload: { activity: normalizedActivity } })
-            if (onCancelEdit) onCancelEdit()
-        } else {
-            dispatch({ type: "save-activity", payload: { newActivity: normalizedActivity } })
-        }
-        setActivityType({ ...estadoIniciar, id: uuidv4(), date: selectedDate })
-    }
-    return (
-        <form className="activity-form" onSubmit={handleSubmit}>
-            <div className="field">
-                <label htmlFor="category">Categoria</label>
-                <select id="category" name="category" value={activityType.category} onChange={handleChange}>
-                    {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                            {cat.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
+    setActivity({
+      ...activity,
+      [e.target.id]: isNumberField ? +e.target.value : e.target.value
+    })
+  }
 
-            <div className="field">
-                <label htmlFor="activity">Actividad</label>
-                <input
-                    id="activity"
-                    name="name"
-                    type="text"
-                    placeholder="Ej. Ensalada / Caminata 30 min"
-                    value={activityType.name}
-                    onChange={handleChange}
-                />
-            </div>
+  const isValidActivity = () => {
+    const { name, calories } = activity
+    return name.trim() !== '' && calories > 0
+  }
+ 
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
 
-            <div className="field">
-                <label htmlFor="calories">Calorias</label>
-                <input
-                    id="calories"
-                    name="calories"
-                    type="number"
-                    min={0}
-                    placeholder="Ej. 320"
-                    value={activityType.calories}
-                    onChange={handleChange}
-                />
-            </div>
+    dispatch({type: 'save-activity', payload: {newActivity: activity}}) 
+    setActivity({
+      ...initialState,
+      id: uuidv4()
+    })
+  }
 
-            <div className="field">
-                <label htmlFor="date">Fecha</label>
-                <input
-                    id="date"
-                    name="date"
-                    type="date"
-                    value={selectedDate}
-                    disabled
-                />
-            </div>
+  return (
+    <form 
+      className="space-y-5 bg-white shadow p-10 rounded-lg"
+      onSubmit={handleSubmit}
+    >
+      <div className="grid grid-cols-1 gap-3">
+          <label htmlFor="category" className="font-bold">Categoría:</label>
+          <select
+            className="border border-slate-300 p-2 rounded-lg w-full bg-white"
+            id="category"
+            value={activity.category}
+            onChange={handleChange}
+          >
+            {categories.map(category => (
+              <option
+                key={category.id}
+                value={category.id}
+              >
+                {category.name}
+              </option>
+            ))}
+          </select>
+      </div>
 
-            <div className="form-actions">
-                <button type="submit" className="button-primary" disabled={!isValidActivity()}>
-                    {editingActivity ? "Actualizar actividad" : `Guardar ${activityType.category === 1 ? 'Comida' : 'Ejercicio'}`}
-                </button>
-                {editingActivity && (
-                    <button
-                        type="button"
-                        className="button-secondary"
-                        onClick={onCancelEdit}
-                    >
-                        Cancelar
-                    </button>
-                )}
-            </div>
-        </form>
-    )
+      <div className="grid grid-cols-1 gap-3">
+          <label htmlFor="name" className="font-bold">Actividad:</label>
+          <input
+            id="name"
+            type="text"
+            className="border border-slate-300 p-2 rounded-lg"
+            placeholder="Ej. Comida, Jugo de Naranja, Ensalada, Ejercicio, Pesas, Bicicleta"
+            value={activity.name}
+            onChange={handleChange}
+          />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+          <label htmlFor="calories" className="font-bold">Calorias:</label>
+          <input
+            id="calories"
+            type="number"
+            className="border border-slate-300 p-2 rounded-lg"
+            placeholder="Calorias. ej. 300 o 500"
+            value={activity.calories}
+            onChange={handleChange}
+          />
+      </div>
+
+      <input
+        type="submit"
+        className="bg-gray-800 hover:bg-gray-900 w-full p-2 font-bold uppercase text-white cursor-pointer disabled:opacity-10"
+        value={activity.category === 1 ? 'Guardar Comida' : 'Guardar Ejercicio'}
+        disabled={!isValidActivity()}
+      />
+
+    </form>
+  )
 }

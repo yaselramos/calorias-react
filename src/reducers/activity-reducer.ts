@@ -1,57 +1,65 @@
-import type { Activity } from "../types"
+import { Activity } from "../types"
 
-export type ActivityAction =
-  | { type: "save-activity"; payload: { newActivity: Activity } }
-  | { type: "update-activity"; payload: { activity: Activity } }
-  | { type: "delete-activity"; payload: { index: number } }
-  | { type: "set-activities"; payload: { activities: Activity[] } }
-  | { type: "reset-activities" }
+export type ActivityActions = 
+    { type: 'save-activity', payload: { newActivity : Activity } } | 
+    { type: 'set-activeId', payload: { id : Activity['id'] } } |
+    { type: 'delete-activity', payload: { id : Activity['id'] } } |
+    { type: 'restart-app' } 
 
 export type ActivityState = {
-  activities: Activity[]
+    activities : Activity[],
+    activeId: Activity['id']
 }
 
-export const initialState: ActivityState = {
-  activities: [],
+const localStorageActivities = () : Activity[] => {
+    const activities = localStorage.getItem('activities') 
+    return activities ? JSON.parse(activities) : []
 }
 
-export const activityReducer = (state: ActivityState = initialState, action: ActivityAction): ActivityState => {
-  if (action.type === "save-activity") {
-    return {
-      ...state,
-      activities: [...state.activities, action.payload.newActivity],
-    }
-  }
+export const initialState : ActivityState = {
+    activities: localStorageActivities(),
+    activeId: ''
+}
 
-  if (action.type === "update-activity") {
-    return {
-      ...state,
-      activities: state.activities.map((activity) =>
-        activity.id === action.payload.activity.id ? action.payload.activity : activity
-      ),
-    }
-  }
+export const activityReducer = (
+        state : ActivityState = initialState,
+        action: ActivityActions
+    ) => {
 
-  if (action.type === "delete-activity") {
-    return {
-      ...state,
-      activities: state.activities.filter((_, idx) => idx !== action.payload.index),
+    if(action.type === 'save-activity') {
+        let updatedActivities : Activity[] = []
+        if(state.activeId) {
+            updatedActivities = state.activities.map( activity => activity.id === state.activeId ? action.payload.newActivity : activity )
+        } else {
+            updatedActivities = [...state.activities, action.payload.newActivity]
+        }
+        return {
+            ...state,
+            activities: updatedActivities,
+            activeId: ''
+        }
     }
-  }
 
-  if (action.type === "set-activities") {
-    return {
-      ...state,
-      activities: action.payload.activities,
+    if(action.type === 'set-activeId') {
+         return {
+            ...state,
+            activeId: action.payload.id
+         }
     }
-  }
 
-  if (action.type === "reset-activities") {
-    return {
-      ...state,
-      activities: [],
+    if(action.type === 'delete-activity') {
+        return {
+            ...state,
+            activities: state.activities.filter( activity => activity.id !== action.payload.id )
+        }
     }
-  }
 
-  return state
+    if(action.type === 'restart-app') {
+        return {
+            activities: [],
+            activeId: ''
+        }
+    }
+
+    return state
 }

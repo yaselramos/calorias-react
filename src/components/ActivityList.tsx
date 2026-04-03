@@ -1,111 +1,63 @@
-import { categories } from "../data/categorys"
-import type { Activity } from "../types"
+import { useMemo, Dispatch } from "react"
+import { Activity } from "../types"
+import { categories } from "../data/categories"
+import { PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { ActivityActions } from "../reducers/activity-reducer"
 
 type ActivityListProps = {
-  activities: Activity[]
-  onEdit?: (activity: Activity) => void
-  onDelete?: (idx: number) => void
-  readOnly?: boolean
-  onReset?: () => void
-  onSaveToBackend?: () => void
-  isSaving?: boolean
-  saveMessage?: string | null
+    activities: Activity[],
+    dispatch: Dispatch<ActivityActions>
 }
 
-export default function ActivityList({
-  activities,
-  onEdit,
-  onDelete,
-  readOnly = false,
-  onReset,
-  onSaveToBackend,
-  isSaving = false,
-  saveMessage,
-}: ActivityListProps) {
-  const getCategoryName = (categoryId: number) => {
-    return categories.find((cat) => cat.id === categoryId)?.name ?? "Desconocida"
-  }
+export default function ActivityList({activities, dispatch} : ActivityListProps) {
 
-  const getActivityIcon = (categoryId: number) => {
-    return categoryId === 1 ? "🍽️" : "💪"
-  }
+    const categoryName = useMemo(() => 
+        (category: Activity['category']) => categories.map( cat => cat.id === category ? cat.name : '' )
+    , [activities])
+    
+    const isEmptyActivities = useMemo(() => activities.length === 0, [activities])
 
-  return (
-    <div className="activity-list">
-      <h3 className="activity-list__title">
-        {readOnly ? "Resultados de la busqueda" : "Historial de actividades"}
-      </h3>
-
-      {activities.length === 0 ? (
-        <p className="activity-list__empty">No hay actividades aún. ¡Comienza a registrar!</p>
-      ) : (
+    return (
         <>
-          <ul className="activity-list__items">
-            {activities.map((activity, idx) => (
-              <li key={idx} className={`activity-item ${readOnly ? "activity-item--readonly" : ""}`}>
-                <span className="activity-item__icon">{getActivityIcon(activity.category)}</span>
+            <h2 className="text-4xl font-bold text-slate-600 text-center">
+                Comida y Actividades
+            </h2>
+        
+            {isEmptyActivities ? 
+                <p className="text-center my-5">No hay actividades aún...</p> : 
+                activities.map( activity => (
+                    <div key={activity.id} className="px-5 py-10 bg-white mt-5 flex justify-between shadow">
+                        <div className="space-y-2 relative"> 
+                            <p className={`absolute -top-8 -left-8 px-10 py-2 text-white uppercase font-bold 
+                            ${activity.category === 1 ? 'bg-lime-500' : 'bg-orange-500'}`}>
+                                {categoryName(+activity.category)}
+                            </p>
+                            <p className="text-2xl font-bold pt-5">{activity.name}</p>
+                            <p className="font-black text-4xl text-lime-500">
+                                {activity.calories} {''}
+                                <span>Calorias</span>
+                            </p>
+                        </div>
 
-                <div className="activity-item__content">
-                  <p className="activity-item__name">{activity.name}</p>
-                  <p className="activity-item__category">
-                    {getCategoryName(activity.category)} • {activity.date}
-                  </p>
-                </div>
+                        <div className="flex gap-5 items-center">
+                            <button
+                                onClick={() => dispatch({type: "set-activeId", payload: {id: activity.id}})}
+                            >
+                                <PencilSquareIcon
+                                    className="h-8 w-8 text-gray-800"
+                                />
+                            </button>
 
-                <div className={`activity-item__calories ${activity.category === 1 ? "activity-item__calories--positive" : "activity-item__calories--negative"}`}>
-                  {activity.category === 1 ? "+" : "-"}
-                  {activity.calories}
-                </div>
-
-                {!readOnly && onEdit && onDelete && (
-                  <div className="activity-item__actions">
-                    <button
-                      className="activity-item__edit"
-                      onClick={() => onEdit(activity)}
-                      aria-label="Editar actividad"
-                      title="Editar"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      className="activity-item__delete"
-                      onClick={() => onDelete(idx)}
-                      aria-label="Eliminar actividad"
-                      title="Eliminar"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-
-          {!readOnly && onReset && onSaveToBackend && (
-            <>
-              <div className="activity-list__footer-actions">
-                <button
-                  className="button-secondary activity-list__reset"
-                  type="button"
-                  onClick={onReset}
-                  disabled={isSaving}
-                >
-                  Reiniciar lista
-                </button>
-                <button
-                  className="button-primary activity-list__save"
-                  type="button"
-                  onClick={onSaveToBackend}
-                  disabled={isSaving}
-                >
-                  {isSaving ? "Guardando..." : "Guardar en backend"}
-                </button>
-              </div>
-              {saveMessage && <p className="activity-list__status">{saveMessage}</p>}
-            </>
-          )}
+                            <button
+                                onClick={() => dispatch({type: "delete-activity", payload: {id: activity.id}})}
+                            >
+                                <XCircleIcon
+                                    className="h-8 w-8 text-red-500"
+                                />
+                            </button>
+                        </div>
+                    </div>
+                ))}
         </>
-      )}
-    </div>
-  )
+    )
 }

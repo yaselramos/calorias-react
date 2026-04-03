@@ -1,11 +1,11 @@
-export type Category={
-    id:number,
-    name:string
+export type Category = {
+    id: number,
+    name: string
 }
+
 export type Activity = {
-  id:string
-  category: number
-  name: string
-  calories: number
-  date: string
+    id: string
+    category: number
+    name: string
+    calories: number
 }
