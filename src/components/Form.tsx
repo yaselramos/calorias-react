@@ -1,5 +1,5 @@
 import { useState, ChangeEvent, FormEvent, Dispatch, useEffect } from "react"
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 import { categories } from "../data/categories"
 import type { Activity } from "../types"
 import { ActivityActions, ActivityState } from "../reducers/activity-reducer"
@@ -37,7 +37,7 @@ export default function Form({dispatch, state} : FormProps) {
   }
 
   const isValidActivity = () => {
-    const { name, calories } = activity
+    const { name, calories } = activity
     return name.trim() !== '' && calories > 0
   }
  
@@ -53,13 +53,15 @@ export default function Form({dispatch, state} : FormProps) {
 
   return (
     <form 
-      className="space-y-5 bg-white shadow p-10 rounded-lg"
+      className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
       onSubmit={handleSubmit}
     >
-      <div className="grid grid-cols-1 gap-3">
-          <label htmlFor="category" className="font-bold">Categoría:</label>
+      <h2 className="text-xl font-extrabold text-slate-800 md:text-2xl">Registrar actividad</h2>
+
+      <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="category" className="text-sm font-semibold uppercase tracking-wide text-slate-600">Categoría</label>
           <select
-            className="border border-slate-300 p-2 rounded-lg w-full bg-white"
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-700 outline-none transition focus:border-lime-500 focus:ring-2 focus:ring-lime-200"
             id="category"
             value={activity.category}
             onChange={handleChange}
@@ -75,24 +77,24 @@ export default function Form({dispatch, state} : FormProps) {
           </select>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-          <label htmlFor="name" className="font-bold">Actividad:</label>
+      <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="name" className="text-sm font-semibold uppercase tracking-wide text-slate-600">Actividad</label>
           <input
             id="name"
             type="text"
-            className="border border-slate-300 p-2 rounded-lg"
+            className="rounded-xl border border-slate-300 px-3 py-2.5 text-slate-700 outline-none transition focus:border-lime-500 focus:ring-2 focus:ring-lime-200"
             placeholder="Ej. Comida, Jugo de Naranja, Ensalada, Ejercicio, Pesas, Bicicleta"
             value={activity.name}
             onChange={handleChange}
           />
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-          <label htmlFor="calories" className="font-bold">Calorias:</label>
+      <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="calories" className="text-sm font-semibold uppercase tracking-wide text-slate-600">Calorias</label>
           <input
             id="calories"
             type="number"
-            className="border border-slate-300 p-2 rounded-lg"
+            className="rounded-xl border border-slate-300 px-3 py-2.5 text-slate-700 outline-none transition focus:border-lime-500 focus:ring-2 focus:ring-lime-200"
             placeholder="Calorias. ej. 300 o 500"
             value={activity.calories}
             onChange={handleChange}
@@ -101,7 +103,7 @@ export default function Form({dispatch, state} : FormProps) {
 
       <input
         type="submit"
-        className="bg-gray-800 hover:bg-gray-900 w-full p-2 font-bold uppercase text-white cursor-pointer disabled:opacity-10"
+        className="w-full cursor-pointer rounded-xl bg-gradient-to-r from-lime-600 to-emerald-600 px-4 py-3 font-bold uppercase tracking-wide text-white transition hover:from-lime-700 hover:to-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
         value={activity.category === 1 ? 'Guardar Comida' : 'Guardar Ejercicio'}
         disabled={!isValidActivity()}
       />

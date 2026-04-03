@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import type { Activity } from "../types"
 import CalorieDisplay from "./CalorieDisplay"
+import CaloriesBarChart from "./CaloriesBarChart"
 
 type CalorieTrackerProps = {
     activities: Activity[]
@@ -11,13 +12,13 @@ export default function CalorieTracker({activities} : CalorieTrackerProps) {
     // Contadores
     const caloriesConsumed = useMemo(() => activities.reduce((total, activity) => activity.category === 1 ? total + activity.calories : total, 0), [activities])
     const caloriesBurned = useMemo(() => activities.reduce((total, activity) => activity.category === 2 ? total + activity.calories : total, 0), [activities])
-    const netCalories = useMemo(() => caloriesConsumed - caloriesBurned, [activities])
-    
-    return (
-        <>
-            <h2 className="text-4xl font-black text-white text-center">Resumen de Calorias</h2>
+    const netCalories = useMemo(() => caloriesConsumed - caloriesBurned, [caloriesConsumed, caloriesBurned])
 
-            <div className="flex flex-col items-center md:flex-row md:justify-between gap-5 mt-10">
+    return (
+        <div className="rounded-2xl bg-slate-900 p-6 shadow-lg md:p-8">
+            <h2 className="text-center text-2xl font-black text-white md:text-3xl">Resumen de Calorias</h2>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
                 <CalorieDisplay
                     calories={caloriesConsumed}
                     text="Consumidas"
@@ -31,7 +32,15 @@ export default function CalorieTracker({activities} : CalorieTrackerProps) {
                     text="Diferencia"
                 />
             </div>
- 
-        </>
+
+            <div className="mt-8">
+                <CaloriesBarChart
+                    consumed={caloriesConsumed}
+                    burned={caloriesBurned}
+                    balance={netCalories}
+                />
+            </div>
+
+        </div>
     )
 }
