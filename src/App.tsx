@@ -1,21 +1,20 @@
-import { useEffect, useReducer, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Form from "./components/Form"
-import { activityReducer, initialState } from "./reducers/activity-reducer"
+import { initialState } from "./reducers/activity-reducer"
 import ActivityList from "./components/ActivityList"
 import CalorieSummary from "./components/CalorieSummary"
 import CaloriesChart from "./components/CaloriesChart"
 import type { Activity } from "./types"
-import SearchPanel from "./components/SearchPanel"
 import ViewMenu, { type ViewMode } from "./components/ViewMenu"
 import { fetchActivitiesByDate, saveActivitiesByDate } from "./services/activity-api"
-import { useDateActivitySearch } from "./hooks/useDateActivitySearch"
+
 import {
   getCachedActivitiesForDate,
   getInitialActivitiesForToday,
   getTodayISO,
   writeActivitiesForDateInCache,
 } from "./services/activity-cache"
-
+import { useActivity } from "./hooks/useActivity"
 const getInitialState = () => {
   const fallbackState = initialState
 
@@ -26,7 +25,7 @@ const getInitialState = () => {
 }
 
 function App() {
-  const [state, dispatch] = useReducer(activityReducer, initialState, getInitialState)
+  const { state, dispatch } = useActivity()
   const [activeView, setActiveView] = useState<ViewMode>("search")
   const [manageDate, setManageDate] = useState(getTodayISO())
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
@@ -36,13 +35,7 @@ function App() {
   const [backendMessage, setBackendMessage] = useState<string | null>(null)
   const manageDateRef = useRef(manageDate)
 
-  const {
-    selectedDate: searchDate,
-    activities: searchActivities,
-    isLoadingDate,
-    searchMessage,
-    onSearchDate,
-  } = useDateActivitySearch()
+
 
   useEffect(() => {
     manageDateRef.current = manageDate
@@ -126,16 +119,9 @@ function App() {
     }
   }
 
-  const handleCancelEdit = () => {
-    setEditingActivity(null)
-  }
+ 
 
-  const handleChangeView = (view: ViewMode) => {
-    setActiveView(view)
-    setEditingActivity(null)
-  }
 
-  const activitiesForManage = state.activities
 
   return (
     <>
@@ -149,89 +135,6 @@ function App() {
         </div>
       </header>
 
-      <main className="layout">
-        <section className="layout__menu">
-          <ViewMenu activeView={activeView} onChangeView={handleChangeView} />
-        </section>
-
-        {activeView === "search" ? (
-          <>
-            <SearchPanel
-              selectedDate={searchDate}
-              onSearchDate={onSearchDate}
-              isLoading={isLoadingDate}
-              message={searchMessage}
-            />
-
-            <section className="panel panel--full">
-              <ActivityList activities={searchActivities} readOnly />
-            </section>
-          </>
-        ) : (
-          <>
-            <section className="panel panel--soft manage-date-panel">
-              <div className="panel__header">
-                <h2>Fecha de gestion</h2>
-                <p>Esta fecha es independiente de la busqueda.</p>
-              </div>
-
-              <label className="field" htmlFor="manageDate">
-                <span>Fecha</span>
-                <input
-                  id="manageDate"
-                  name="manageDate"
-                  type="date"
-                  value={manageDate}
-                  onChange={(event) => setManageDate(event.target.value)}
-                  disabled={isSavingBackend}
-                />
-              </label>
-
-              {isLoadingManageDate && (
-                <p className="manage-date-panel__status">Cargando actividades para gestionar...</p>
-              )}
-              {manageMessage && <p className="manage-date-panel__status">{manageMessage}</p>}
-            </section>
-
-            <section className="panel">
-              <div className="panel__header">
-                <h2>{editingActivity ? "Editar actividad" : "Nueva actividad"}</h2>
-                <p>{editingActivity ? "Actualiza los datos y guarda los cambios." : "Completa los campos para guardar un registro."}</p>
-              </div>
-              <Form
-                key={editingActivity?.id || "new"}
-                dispatch={dispatch}
-                selectedDate={manageDate}
-                editingActivity={editingActivity}
-                onCancelEdit={handleCancelEdit}
-              />
-            </section>
-
-
-            <CalorieSummary activities={activitiesForManage} />
-
-            <section className="panel">
-              <ActivityList
-                activities={activitiesForManage}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onReset={handleReset}
-                onSaveToBackend={handleSaveToBackend}
-                isSaving={isSavingBackend}
-                saveMessage={backendMessage}
-              />
-            </section>
-
-            <section className="panel">
-              <div className="panel__header">
-                <h2>Grafico de calorias</h2>
-                <p>Compara rapidamente calorias consumidas, quemadas y el balance.</p>
-              </div>
-              <CaloriesChart activities={activitiesForManage} />
-            </section>
-          </>
-        )}
-      </main>
     </>
   )
 }

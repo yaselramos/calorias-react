@@ -7,7 +7,7 @@ export type ActivityAction =
   | { type: "set-activities"; payload: { activities: Activity[] } }
   | { type: "reset-activities" }
 
-type ActivityState = {
+export type ActivityState = {
   activities: Activity[]
 }
 
